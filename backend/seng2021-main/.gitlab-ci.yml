@@ -1,0 +1,22 @@
+image: node:20
+
+stages:
+  - linting
+  - tests
+
+before_script:
+  - node -v # Check Node.js version
+  - npm -v  # Check npm version
+  - npm install
+
+linting:
+  stage: linting
+  script: 
+    - npm run lint 
+
+tests:
+  stage: tests 
+  script:
+    - echo $API_KEYS
+    - npm run test 
+

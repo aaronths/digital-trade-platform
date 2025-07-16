@@ -1,0 +1,1705 @@
+openapi: 3.0.3
+info:
+  title: NoTuna Order Creation API
+  description: An API constructed by T13A_NoTuna streamlines the creation of a standardised UBL order document by automatically converting user provided data into a compliant XML format, this automation ensures adherence to industry standards for electronic transactions. State diagram available here https://i.ibb.co/chLx87KQ/Soft-Blue-Illustrative-Online-Shopping-Procedure-Poster-42-x-42-cm.png
+  version: 1.0.0
+
+tags:
+  - name: User
+    description: All routes for registering a user and logging in
+  - name: Buyer
+    description: All routes implemented and visible from the buyer side of the API. Eg- Creating Orders and Cancelling Orders
+  - name: Seller
+    description: All routes implemented and visible from the seller side of the API. Eg- Registering Orders and Adjusting Orders.
+
+paths:
+  /shop/user/register:
+    post:
+      tags:
+        - User
+      summary: Sends required information to register a user to the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nameFirst:
+                  type: string
+                  example: "John"
+                nameLast:
+                  type: string
+                  example: "Doe"
+                email:
+                  type: string
+                  example: "example@gmail.com"
+                password:
+                  type: string
+                  example: "password123"
+              required:
+                - nameFirst
+                - nameLast
+                - email
+                - password
+      responses:
+        "200":
+          description: OK, adds account to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User registered successfully"
+                    description: Status message
+        "400":
+          description: One of the provided details is invalid or email already registered
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Email already in use"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Please use a valid email format (i.e. 'valid@email.com')"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "First name must be between 2-20 characters"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Last name must be between 2-20 characters."
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "First name can only contain letters, hyphens, spaces, and apostrophes."
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Last name can only contain letters, hyphens, spaces, and apostrophes."
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Password must be 8 or more characters with at least one number and letter"
+
+  /shop/user/login:
+    post:
+      tags:
+        - User
+      summary: Authenticates a user and returns session details along with an access token upon successful login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "example@gmail.com"
+                password:
+                  type: string
+                  example: "password123"
+              required:
+                - email
+                - password
+      responses:
+        "200":
+          description: OK, returns session details and an authentication token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionDetails:
+                    type: object
+                    properties:
+                      namefirst:
+                        type: string
+                        example: "John"
+                        description: User's first name
+                      namelast:
+                        type: string
+                        example: "Doe"
+                        description: User's last name
+                      id:
+                        type: integer
+                        example: 1
+                        description: User ID
+                      b_id:
+                        type: integer
+                        example: 100
+                        description: Business ID
+                      s_id:
+                        type: integer
+                        example: 200
+                        description: Shop ID
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        description: JWT authentication token
+        "400":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid email or password"
+        "401":
+          description: Unauthorized - Incorrect credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Incorrect email or password"
+
+  /shop/buyer/order:
+    post:
+      tags:
+        - Buyer
+      summary: Sends required information to create an order
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: number
+                  example: 1500
+                paymentDetails:
+                  type: string
+                  example: "Credit Card - ****1234"
+                quantity:
+                  type: number
+                  example: 3
+                deliveryAddress:
+                  type: string
+                  example: "123 Main St, Apartment 4B, New York, NY 10001"
+                contractData:
+                  type: string
+                  example: "Contract reference number: ABC123456"
+                buyerCompanyName:
+                  type: string
+                  example: "Buyer Co."
+                buyerAddress:
+                  type: string
+                  example: "123 Buyer St, New York, NY 10001"
+                buyerPhoneNumber:
+                  type: string
+                  example: "+11234567890"
+                buyerEmail:
+                  type: string
+                  format: email
+                  example: "buyer@example.com"
+                buyerTax:
+                  type: string
+                  example: "123-45-6789"
+                sellerCompanyName:
+                  type: string
+                  example: "Seller Inc."
+                sellerAddress:
+                  type: string
+                  example: "456 Seller Ave, Los Angeles, CA 90001"
+                sellerPhoneNumber:
+                  type: string
+                  example: "+19876543210"
+                sellerEmail:
+                  type: string
+                  format: email
+                  example: "seller@example.com"
+                sellerTax:
+                  type: string
+                  example: "987-65-4321"
+                productId:
+                  type: string
+                  example: "123456"
+                productTax:
+                  type: string
+                  example: "5%"
+                productDesc:
+                  type: string
+                  example: "Wireless mouse"
+              required:
+                - price
+                - paymentDetails
+                - quantity
+                - deliveryAddress
+                - buyerCompanyName
+                - buyerAddress
+                - buyerPhoneNumber
+                - buyerEmail
+                - buyerTax
+                - sellerCompanyName
+                - sellerAddress
+                - sellerPhoneNumber
+                - sellerEmail
+                - sellerTax
+                - productId
+                - productTax
+                - productDesc
+      responses:
+        "200":
+          description: OK, Returns a system-generated unique orderId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order accepted successfully"
+                    description: Status message
+                  orderId:
+                    type: number
+                    example: 1
+                    description: Automatically generated unique identifier for the created order
+        "400":
+          description: One of the provided details is invalid
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "price must be greater than or equal to 0"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "invalid email"
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+
+  /shop/seller/{sellerId}/active-orders:
+    get:
+      tags:
+        - Seller
+      summary: Retrieves all active orders associated with the seller
+      description: |
+        Returns a list of all orders for the seller identified by the email query parameter.
+        The email must correspond to a registered seller in the database.
+      parameters:
+        - name: sellerId
+          in: path
+          required: true
+          description: The ID of the seller (not currently used for logic but kept for consistency)
+          schema:
+            type: integer
+            example: 1
+        - name: email
+          in: query
+          required: true
+          description: Seller's email to identify their orders
+          schema:
+            type: string
+            format: email
+            example: seller@example.com
+        - name: Authorization
+          in: header
+          required: false
+          description: Optional API Key for authentication
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Returns the list of seller's orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        orderId:
+                          type: integer
+                          example: 123
+                        orderDate:
+                          type: string
+                          format: date
+                          example: "2025-04-01"
+                        price:
+                          type: number
+                          example: 1200
+                        status:
+                          type: string
+                          example: "PENDING_SELLER_REVIEW"
+                        product:
+                          type: string
+                          example: "Wireless Mouse"
+                        buyerName:
+                          type: string
+                          example: "Buyer Co."
+        "400":
+          description: Bad Request - Email is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Seller email is required"
+        "404":
+          description: Seller email not found in database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Seller email not found"
+        "500":
+          description: Internal Server Error - Something went wrong on the server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to retrieve seller orders"
+
+  /shop/seller/{sellerId}/active-orders-action:
+    get:
+      tags:
+        - Seller
+      summary: Retrieves seller's orders that require action
+      description: |
+        Returns only the seller's orders that are in the `PENDING_SELLER_REVIEW` state.
+        Requires the seller's email as a query parameter to fetch associated orders.
+      parameters:
+        - name: sellerId
+          in: path
+          required: true
+          description: The ID of the seller (included for consistency; not used in filtering)
+          schema:
+            type: integer
+            example: 1
+        - name: email
+          in: query
+          required: true
+          description: Seller's email address used to look up their orders
+          schema:
+            type: string
+            format: email
+            example: seller@example.com
+      responses:
+        "200":
+          description: OK - List of orders pending seller action
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        orderId:
+                          type: integer
+                          example: 123
+                        orderDate:
+                          type: string
+                          format: date
+                          example: "2025-04-01"
+                        price:
+                          type: number
+                          example: 1500
+                        status:
+                          type: string
+                          example: "PENDING_SELLER_REVIEW"
+                        product:
+                          type: string
+                          example: "Wireless Mouse"
+                        buyerName:
+                          type: string
+                          example: "Buyer Co."
+        "400":
+          description: Email query is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Seller email is required"
+        "404":
+          description: Email not found in the database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Seller email not found"
+        "500":
+          description: Internal Server Error - Failed to retrieve orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to retrieve seller orders with action needed"
+
+  /shop/buyer/{buyerId}/active-orders:
+    get:
+      tags:
+        - Buyer
+      summary: Retrieve all orders associated with a buyer
+      description: |
+        Returns a list of all orders for a given buyer email, excluding orders with status `ORDER_REGISTERED`.
+        Requires the buyer's email as a query parameter to fetch the associated orders.
+      parameters:
+        - name: buyerId
+          in: path
+          required: true
+          description: The ID of the buyer (included for path consistency)
+          schema:
+            type: integer
+            example: 1
+        - name: email
+          in: query
+          required: true
+          description: Buyer's email address
+          schema:
+            type: string
+            format: email
+            example: buyer@example.com
+      responses:
+        "200":
+          description: OK - List of buyer's active orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        orderId:
+                          type: integer
+                          example: 1
+                        orderDate:
+                          type: string
+                          format: date
+                          example: "2025-04-01"
+                        price:
+                          type: number
+                          example: 1500
+                        status:
+                          type: string
+                          example: "PENDING_BUYER_REVIEW"
+                        productDescription:
+                          type: string
+                          example: "Wireless Mouse"
+                        sellerName:
+                          type: string
+                          example: "Seller Inc."
+        "400":
+          description: Missing buyer email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buyer email is required"
+        "404":
+          description: Buyer email not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buyer email not found"
+        "500":
+          description: Internal server error while fetching orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to retrieve buyer orders"
+
+  /shop/buyer/{buyerId}/active-orders-action:
+    get:
+      tags:
+        - Buyer
+      summary: Retrieve buyer's orders that require action
+      description: |
+        Returns a filtered list of orders for the buyer that are in `PENDING_BUYER_REVIEW` status.
+      parameters:
+        - name: buyerId
+          in: path
+          required: true
+          description: The ID of the buyer (included for consistency; not used in logic)
+          schema:
+            type: integer
+            example: 1
+        - name: email
+          in: query
+          required: true
+          description: Buyer's email address
+          schema:
+            type: string
+            format: email
+            example: buyer@example.com
+      responses:
+        "200":
+          description: OK - List of orders pending buyer action
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        orderId:
+                          type: integer
+                          example: 1
+                        status:
+                          type: string
+                          example: "PENDING_BUYER_REVIEW"
+                        sellerName:
+                          type: string
+                          example: "Seller Inc."
+                        productDescription:
+                          type: string
+                          example: "Wireless mouse"
+        "400":
+          description: Missing buyer email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buyer email is required"
+        "404":
+          description: Buyer email not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buyer email not found"
+        "500":
+          description: Internal server error while filtering orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to retrieve buyer orders"
+
+  /shop/{orderId}:
+    get:
+      tags:
+        - User
+      summary: Retrieve a registered order’s details in JSON format
+      description: |
+        Returns all details of a specific order if the order exists and has the status `ORDER_REGISTERED`.
+        Requires a valid API key for authentication.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: The numeric ID of the order to retrieve
+          schema:
+            type: integer
+            example: 12345
+        - name: Authorization
+          in: header
+          required: true
+          description: API Key for authentication
+          schema:
+            type: string
+            example: "Authorization-Key"
+      responses:
+        "200":
+          description: OK - Returns order information in JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  OrderId:
+                    type: integer
+                    example: 12345
+                  OrderDate:
+                    type: string
+                    format: date
+                    example: "2024-03-15"
+                  Price:
+                    type: number
+                    example: 1500
+                  PaymentDetails:
+                    type: string
+                    example: "Credit Card - ****1234"
+                  Quantity:
+                    type: integer
+                    example: 3
+                  DeliveryAddress:
+                    type: string
+                    example: "123 Main St, Apartment 4B, New York, NY 10001"
+                  ContractData:
+                    type: string
+                    example: "Contract reference number: ABC123456"
+                  Response:
+                    type: string
+                    example: "Approved"
+                  Details:
+                    type: string
+                    example: "Urgent delivery required"
+                  OrderStatus:
+                    type: string
+                    example: "ORDER_REGISTERED"
+                  Buyer:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "Buyer Co."
+                      address:
+                        type: string
+                        example: "123 Buyer St, New York, NY 10001"
+                      phone:
+                        type: string
+                        example: "+11234567890"
+                      email:
+                        type: string
+                        example: "buyer@example.com"
+                      tax:
+                        type: string
+                        example: "123-45-6789"
+                  Seller:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "Seller Inc."
+                      address:
+                        type: string
+                        example: "456 Seller Ave, Los Angeles, CA 90001"
+                      phone:
+                        type: string
+                        example: "+19876543210"
+                      email:
+                        type: string
+                        example: "seller@example.com"
+                      tax:
+                        type: string
+                        example: "987-65-4321"
+                  Product:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123456
+                      tax:
+                        type: string
+                        example: "5%"
+                      description:
+                        type: string
+                        example: "Wireless mouse"
+        "400":
+          description: Bad request - Invalid or missing order ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid orderId"
+        "403":
+          description: Forbidden - Order is not registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order status is not ORDER_REGISTERED"
+        "404":
+          description: Not found - Order with specified ID does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order not found"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to retrieve order"
+
+  /shop/buyer/{orderId}/order-change:
+    put:
+      tags:
+        - Buyer
+      summary: Updates the details of an existing order
+      description: |
+        This endpoint allows a buyer to update the details of an existing order. The order must be in a state that allows modifications (e.g., `PENDING_SELLER_REVIEW`).
+        The buyer can update fields such as `buyerCompanyName`, `sellerCompanyName`, `productId`, `paymentDetails`, `deliveryAddress`, `contractData`, `quantity`, and `price`.
+        After updating, the order details are saved, and the seller is notified of the changes.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: The ID of the order to update.
+          schema:
+            type: number
+            example: 123
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyerCompanyName:
+                  type: string
+                  example: "Buyer Corp"
+                sellerCompanyName:
+                  type: string
+                  example: "Seller Corp"
+                productId:
+                  type: number
+                  example: 456
+                paymentDetails:
+                  type: string
+                  example: "Credit Card - ****1234"
+                deliveryAddress:
+                  type: string
+                  example: "123 Main St, New York, NY 10001"
+                contractData:
+                  type: string
+                  example: "Contract reference number: ABC123456"
+                quantity:
+                  type: number
+                  example: 5
+                price:
+                  type: number
+                  example: 100.50
+              required:
+                - buyerCompanyName
+                - sellerCompanyName
+                - productId
+                - paymentDetails
+                - deliveryAddress
+                - contractData
+                - quantity
+                - price
+      responses:
+        "200":
+          description: OK. The order was successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order updated successfully"
+                  orderId:
+                    type: number
+                    example: 123
+        "400":
+          description: Bad Request. One of the provided details is invalid or missing.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Missing required fields"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid product ID"
+        "401":
+          description: Unauthorized. The API Key is invalid or missing.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+        "404":
+          description: Not Found. The order does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order not found"
+
+  /shop/buyer/{orderId}/order-cancel:
+    put:
+      tags:
+        - Buyer
+      summary: Cancels an existing the order
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 123455
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order 1 successfully cancelled"
+
+        "400":
+          description: "Order not found or Order cancellation failed: Invalid OrderId"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order cancellation failed: Invalid OrderId"
+
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+
+  /shop/buyer/{orderId}/order-accept:
+    put:
+      tags:
+        - Buyer
+      summary: Accepts the order from the Seller, and progresses to the next stages
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: string
+            example: "1"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order accepted successfully"
+                    description: Status message
+                  orderId:
+                    type: number
+                    example: 1
+                    description: Ok, Returns OrderId
+        "400":
+          description: One of the provided details is invalid
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order cancellation failed: Invalid OrderId"
+        "500":
+          description: Database Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Database error"
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+
+  /shop/seller/{orderId}/order-reject:
+    delete:
+      tags:
+        - Seller
+      summary: Rejects the order made by the buyer
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 12345
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Order rejected successfully
+                  orderId:
+                    type: number
+                    example: 1
+
+        "400":
+          description: One of the provided details is invalid
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order rejection failed: Invalid OrderId"
+
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+
+  /shop/seller/{orderId}/order-accept:
+    put:
+      tags:
+        - Seller
+      summary: Accepts the order from the Buyer, and progresses to the next stages
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 12345
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order accepted successfully"
+                    description: Status message
+                  orderId:
+                    type: number
+                    example: 1
+                    description: Ok, Returns OrderId
+        "400":
+          description: Order note found or order in wrong state
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order accept failed: Invalid OrderId"
+
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+
+  /shop/seller/{orderId}/order-create-response:
+    post:
+      tags:
+        - Seller
+      summary: After accepting the order, the Seller requires additional response from the buyer
+
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 12345
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: number
+                    description: OK, Returns OrderID and .JSON file requesting the required addition information from the Buyer
+        "400":
+          description: Order note found or order in wrong state
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order create response failed: Invalid OrderId"
+
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+  /shop/seller/{orderId}/order-cancel-receive:
+    delete:
+      tags:
+        - Seller
+      summary: After buyer cancels the order, delete the order
+
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 12345
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Order 1 successfully cancelled
+        "400":
+          description: Order note found or order in wrong state
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order create response failed: Invalid OrderId"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order cannot be cancelled in its current state"
+        "401":
+          description: Invalid API Key
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Invalid API Key"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Supply a valid API Key"
+  /shop/seller/{orderId}/order-add-detail:
+    put:
+      tags:
+        - Seller
+      summary: After order is made, check required details and return a message for buyer to change
+
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: API Key for authorization.
+        - name: orderId
+          in: path
+          required: true
+          description: "The ID of the order"
+          schema:
+            type: number
+            example: 12345
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responseText:
+                  type: string
+                  example: additional seller requirements
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Response updated successfully
+                  orderId:
+                    type: number
+                    example: 1
+                  responseText:
+                    type: string
+                    example: additional seller requirements
+                  newStatus:
+                    type: string
+                    example: PENDING__REVIEW'
+        "400":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order create response failed: Invalid OrderId"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Order not found"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Response text is required"
+        "403":
+          description: Wrong order state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order status is not PENDING_SELLER_REVIEW"
+
+  /shop/seller/{orderId}/order-register:
+    put:
+      tags:
+        - Seller
+      summary: Finalises the accepted order from Buyer, and confirm the order completely
+
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: "The number ID of the order to be finalized"
+          schema:
+            type: number
+            example: 12345
+        - name: Authorization
+          in: header
+          required: true
+          description: "API Key for authentication"
+          schema:
+            type: string
+            example: "Authorization-Key"
+
+      responses:
+        "200":
+          description: Order registered successfully and returns UBL XML document
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/UBLDocument"
+
+        "400":
+          description: Bad Request - One or more provided details are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid orderId"
+
+        "401":
+          description: Unauthorized - Missing or invalid API Key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid API Key"
+        "403":
+          description: Forbidden - Order is not in SELLER_ORDER_ACCEPTED status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order status is not SELLER_ORDER_ACCEPTED"
+        "404":
+          description: Not Found - The requested order does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order not found"
+        "500":
+          description: Internal Server Error - Unable to process the request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Failed to register order"
+
+  /shop/seller/generate-invoice/{orderId}:
+    post:
+      summary: Generate an invoice for a specific order
+      description: Generates an invoice for the provided order ID. The order must be finalised and exist in the database.
+      tags:
+        - Seller
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: API key for authentication
+          schema:
+            type: string
+            example: Authorization-Key
+        - name: orderId
+          in: path
+          required: true
+          description: The ID of the order to generate an invoice for
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Invoice successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: invoice generated successfully
+                  invoiceId:
+                    type: string
+                    example: 8426f61c-4ae0-453f-a83e-438eb1421f17
+        "401":
+          description: Unauthorized or validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: OrderId is empty or invalid
+components:
+  schemas:
+    UBLDocument:
+      type: object
+      xml:
+        name: UBLDocument
+      properties:
+        OrderDetails:
+          type: object
+          xml:
+            name: OrderDetails
+          properties:
+            OrderId:
+              type: number
+              xml:
+                name: OrderId
+              example: 12345
+            OrderDate:
+              type: string
+              format: date
+              xml:
+                name: OrderDate
+              example: "2024-03-15"
+            Price:
+              type: number
+              xml:
+                name: Price
+              example: 1500
+            PaymentDetails:
+              type: string
+              xml:
+                name: PaymentDetails
+              example: "Credit Card - ****1234"
+            Quantity:
+              type: number
+              xml:
+                name: Quantity
+              example: 3
+            DeliveryAddress:
+              type: string
+              xml:
+                name: DeliveryAddress
+              example: "123 Main St, Apartment 4B, New York, NY 10001"
+            ContractData:
+              type: string
+              xml:
+                name: ContractData
+              example: "Contract reference number: ABC123456"
+            Response:
+              type: string
+              xml:
+                name: Response
+              example: "Approved"
+            Details:
+              type: string
+              xml:
+                name: Details
+              example: "Urgent delivery required"
+            OrderStatus:
+              type: string
+              xml:
+                name: OrderStatus
+              example: "ORDER_REGISTERED"
+            Buyer:
+              type: object
+              xml:
+                name: Buyer
+              properties:
+                Name:
+                  type: string
+                  xml:
+                    name: Name
+                  example: "Buyer Co."
+                Address:
+                  type: string
+                  xml:
+                    name: Address
+                  example: "123 Buyer St, New York, NY 10001"
+                Phone:
+                  type: string
+                  xml:
+                    name: Phone
+                  example: "+11234567890"
+                Email:
+                  type: string
+                  xml:
+                    name: Email
+                  example: "buyer@example.com"
+                Tax:
+                  type: string
+                  xml:
+                    name: Tax
+                  example: "123-45-6789"
+            Seller:
+              type: object
+              xml:
+                name: Seller
+              properties:
+                Name:
+                  type: string
+                  xml:
+                    name: Name
+                  example: "Seller Inc."
+                Address:
+                  type: string
+                  xml:
+                    name: Address
+                  example: "456 Seller Ave, Los Angeles, CA 90001"
+                Phone:
+                  type: string
+                  xml:
+                    name: Phone
+                  example: "+19876543210"
+                Email:
+                  type: string
+                  xml:
+                    name: Email
+                  example: "seller@example.com"
+                Tax:
+                  type: string
+                  xml:
+                    name: Tax
+                  example: "987-65-4321"
+            Product:
+              type: object
+              xml:
+                name: Product
+              properties:
+                Id:
+                  type: number
+                  xml:
+                    name: Id
+                  example: 123456
+                Tax:
+                  type: number
+                  xml:
+                    name: Tax
+                  example: 5
+                Description:
+                  type: string
+                  xml:
+                    name: Description
+                  example: "Wireless mouse"

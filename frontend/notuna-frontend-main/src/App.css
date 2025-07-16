@@ -1,0 +1,51 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz@9..40&display=swap");
+
+@font-face {
+  font-family: "TM";
+  src: url("/fonts/TAN MERINGUE.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --bs-body-font-family: "DM Sans", sans-serif;
+}
+
+/* Ensure consistent alignment for all nav items */
+.nav .nav-item {
+  display: flex;
+  align-items: center; /* Align items vertically */
+  justify-content: center; /* Center content horizontally */
+}
+
+/* Remove unnecessary margins */
+.nav .nav-link,
+.nav .btn {
+  padding: 8px 16px; /* Equalize padding */
+  margin: 0; /* Reset default margins */
+  line-height: 1.5; /* Ensure consistent height */
+  display: flex; /* Make it flexible */
+  align-items: center; /* Align vertically */
+  font-family: "DM Sans", sans-serif;
+  font-size: 1.2rem;
+}
+
+/* Add spacing between navigation items */
+.nav .nav-item:not(:last-child) {
+  margin-right: 10px;
+}
+
+.custom-submit-btn {
+  font-size: 1.25rem; /* Default text size */
+  font-weight: bold;
+  font-family: "DM Sans";
+  background-color: #ffc107; /* Bootstrap warning yellow */
+  color: black; /* Default text color */
+  border: none;
+  transition: font-size 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+.custom-submit-btn:hover {
+  font-size: 1.5rem; /* Larger text on hover */
+  color: white; /* Change text color to white */
+}
